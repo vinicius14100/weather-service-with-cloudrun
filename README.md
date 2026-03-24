@@ -57,7 +57,7 @@ Retorna informações meteorológicas atuais para um CEP fornecido.
 
 1. Clone o repositório:
 ```bash
-git clone <repository-url>
+git clone https://github.com/vinicius14100/weather-service-with-cloudrun.git
 cd CloudRun
 ```
 
