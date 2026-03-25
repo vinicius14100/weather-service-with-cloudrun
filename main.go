@@ -124,6 +124,13 @@ func (s *Service) getLocationByCEP(cep string) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusNotFound {
+		return "", errZipcodeNotFound
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("viacep returned status %d", resp.StatusCode)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
