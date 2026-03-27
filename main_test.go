@@ -205,6 +205,39 @@ func TestWeatherHandler_ZipcodeNotFound404(t *testing.T) {
 	}
 }
 
+func TestWeatherHandler_ZipcodeNotFound404_ViaCEPStringTrue(t *testing.T) {
+	viaCEPServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"erro":"true"}`))
+	}))
+	defer viaCEPServer.Close()
+
+	weatherServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"current":{"temp_c":28.5}}`))
+	}))
+	defer weatherServer.Close()
+
+	svc := &Service{
+		HTTPClient:     http.DefaultClient,
+		ViaCEPBaseURL:  viaCEPServer.URL,
+		WeatherBaseURL: weatherServer.URL,
+		WeatherAPIKey:  "test-key",
+	}
+
+	req := httptest.NewRequest("GET", "/weather?cep=99999999", nil)
+	w := httptest.NewRecorder()
+	svc.WeatherHandler(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, resp.StatusCode)
+	}
+	if body := w.Body.String(); body != "can not find zipcode" {
+		t.Fatalf("expected body %q, got %q", "can not find zipcode", body)
+	}
+}
+
 func TestWeatherHandler_ViaCEP404NonJSON_ReturnsZipcodeNotFound404(t *testing.T) {
 	viaCEPServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)

@@ -22,7 +22,7 @@ type WeatherResponse struct {
 
 type ViaCEPResponse struct {
 	Localidade string `json:"localidade"`
-	Erro       bool   `json:"erro"`
+	Erro       any    `json:"erro"`
 }
 
 type WeatherAPIResponse struct {
@@ -141,11 +141,22 @@ func (s *Service) getLocationByCEP(cep string) (string, error) {
 		return "", err
 	}
 
-	if viaCEPResp.Erro || viaCEPResp.Localidade == "" {
+	if viaCEPIndicatesNotFound(viaCEPResp.Erro) || viaCEPResp.Localidade == "" {
 		return "", errZipcodeNotFound
 	}
 
 	return viaCEPResp.Localidade, nil
+}
+
+func viaCEPIndicatesNotFound(v any) bool {
+	switch t := v.(type) {
+	case bool:
+		return t
+	case string:
+		return t == "true" || t == "True" || t == "TRUE"
+	default:
+		return false
+	}
 }
 
 func (s *Service) getTemperatureByCity(city string) (float64, error) {
